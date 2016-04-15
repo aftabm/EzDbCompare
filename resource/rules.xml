@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+		<schemaRetrivalSql>
+			<![CDATA[ 
+				SELECT "TABLE"."TABLE_NAME",
+					  "COLUMN_NAME",
+					  "DATA_TYPE",
+					  "IS_NULLABLE",					  					  
+					  "CHARACTER_MAXIMUM_LENGTH",
+					  "CHARACTER_OCTET_LENGTH",
+					  "NUMERIC_PRECISION",  
+					  "CHARACTER_SET_NAME",
+					  "COLLATION_NAME",
+					  "COLUMN_DEFAULT"
+					  
+			  	from "INFORMATION_SCHEMA"."TABLES" "TABLE", 
+                     "INFORMATION_SCHEMA"."COLUMNS" "COLUMN"
+				where "TABLE"."TABLE_NAME" = "COLUMN"."TABLE_NAME"
+				order by "TABLE"."TABLE_NAME", "COLUMN_NAME"
+			]]>
+		</schemaRetrivalSql>
+		
+		<indexRetrivalSql>
+			<![CDATA[
+			
+				SELECT
+				    [TABLE_NAME] = OBJECT_NAME(i.[object_id]),
+				    [COLUMN_NAME] = c.Name, 
+				    [PK] = i.is_primary_key,
+				    [UNIQUE] = i.is_unique,
+				    [UNIQUE_CONSTRAINT] = i.is_unique_constraint
+				FROM
+				    sys.indexes AS i 
+					
+				INNER JOIN 
+				    sys.index_columns AS ic 
+				    ON i.[object_id] = ic.[object_id] 
+				    AND i.index_id = ic.index_id
+				INNER JOIN 
+				    sys.columns c
+				    ON ic.column_id = c.column_id
+				    AND ic.[object_id] = c.[object_id]
+				
+					where i.is_unique=1 and i.is_primary_key=0 and c.Name NOT LIKE '%ID'
+				ORDER BY [TABLE_NAME], [COLUMN_NAME];					
+			]]>
+		</indexRetrivalSql>		
+		
+		<db1 name="migration_before">
+			<dialect>MSSQL</dialect>
+			
+			<connectionUrl> 
+				<![CDATA[jdbc:sqlserver://10.215.199.211:1433]]>	
+			</connectionUrl>
+			
+ 			<driverClass> 
+				com.microsoft.sqlserver.jdbc.SQLServerDriver
+			</driverClass>				
+			
+			
+			<!-- views -->
+			<ignoreTable reason="">LAST_DEVICE_USER</ignoreTable>
+			<ignoreTable reason="">EWDEPLOY_STATE</ignoreTable>
+			<ignoreTable reason="">PACKAGE_STATE_STANDARD</ignoreTable>
+			<ignoreTable reason="">PACKAGE_STATE_STANDARD</ignoreTable>
+			<ignoreTable reason="">PACKAGE_STATE_DEFAULT</ignoreTable>
+			<ignoreTable reason="">PACKAGE_STATE</ignoreTable>
+			<ignoreTable reason="">DEVICE_SEARCH</ignoreTable>
+			<ignoreTable reason="">USER_GROUP_ROLE</ignoreTable>
+			<ignoreTable reason="">USER_TO_USERMANAGED</ignoreTable>
+			<ignoreTable reason="">USER_TO_USERMANAGED</ignoreTable>
+			<ignoreTable reason="">USER_TO_GROUP_MANAGED</ignoreTable>
+			<ignoreTable reason="">USER_TO_GROUP_MANAGED</ignoreTable>
+			<ignoreTable reason="">IOS_APNS_INFO</ignoreTable>
+			<ignoreTable reason="">MAG_VIEW</ignoreTable>
+		</db1>
+
+		<db2 name="migration_after">
+			<dialect>MSSQL</dialect>
+			
+			<connectionUrl> 
+				<![CDATA[jdbc:sqlserver://10.215.199.211:1433]]>	
+			</connectionUrl>
+
+ 			<driverClass> 
+				com.microsoft.sqlserver.jdbc.SQLServerDriver
+			</driverClass>
+						
+		</db2>
+	
+		<evaluate>
+			<compareAll name="row_count"> 
+				<sql> 
+					<![CDATA[SELECT COUNT(1) FROM TABLE_NAME]]> 
+				</sql> 
+			</compareAll>	
+			
+			<compareAll name="row_data">
+				<sql>	  <![CDATA[SELECT COLUMN_NAME FROM TABLE_NAME ORDER BY ORDER_BY_COLUMN]]>	</sql>
+				 				
+				<ignoreColumnName><![CDATA[REGEX=ID]]></ignoreColumnName>
+							
+				<ignoreColumnType>TEXT</ignoreColumnType>
+				<ignoreColumnType>NTEXT</ignoreColumnType>
+				<ignoreColumnType>IMAGE</ignoreColumnType>
+				<ignoreColumnType>DATETIME</ignoreColumnType>
+				<ignoreColumnType>VARBINARY</ignoreColumnType>
+				
+				<!-- 
+				<order_by>
+					<table>DEVICE</table>
+					<column>SERIAL_NUMBER</column>
+				</order_by>
+				 -->
+				<order_by>
+					<table>AUTOMATED_ACTIONS</table>
+					<column>DEVICE_IMEI</column>
+				</order_by>
+				
+				
+			</compareAll>
+						
+ 			<compare name="query1" description="test" >
+				<db1Sql> <![CDATA[SELECT * FROM DEVICE as d order by d.IMEI]]>   </db1Sql>
+				<db2Sql> <![CDATA[SELECT * FROM DEVICE as d order by d.IMEI]]>  </db2Sql>
+			</compare> 
+		</evaluate>
+				
+</config>
